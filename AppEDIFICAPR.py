@@ -397,9 +397,25 @@ elif rubro == "Plan de pagos de deuda e interés":
         df = pd.DataFrame(schedule, columns=["Mes", "Pago mensual (Lps)", "Pago a capital (Lps)", "Interés (Lps)", "Saldo restante (Lps)"])
         df = df.reset_index(drop=True)  # インデックスをリセットして削除
 
-        # 結果の表示（st.tableを使ってインデックスを非表示に）
+        # 結果の表示（インデックスをリセットして表示）
         st.write("### Cuadro de Amortización")
-        st.table(df)
+        st.dataframe(df.reset_index(drop=True))
+
+        # Excelファイルのダウンロードオプション
+        def generate_excel(dataframe):
+            output = BytesIO()
+            with pd.ExcelWriter(output, engine="openpyxl") as writer:
+                dataframe.to_excel(writer, index=False, sheet_name="Amortización")
+            return output.getvalue()
+
+        excel_data = generate_excel(df)
+        st.download_button(
+            label="Descargar el cuadro en Excel",
+            data=excel_data,
+            file_name="cuadro_de_amortizacion.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
 
 elif rubro == "Plan de inversión":
     st.write("## :blue[Planificación de inversión]") 
