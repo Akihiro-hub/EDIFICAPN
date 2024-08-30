@@ -398,7 +398,7 @@ elif rubro == "Plan de pagos de deuda e interés":
         df = df.reset_index(drop=True)  # インデックスをリセットして削除
 
         # 結果の表示（インデックスをリセットして表示）
-        st.write("### Cuadro de Amortización")
+        st.write("#### Cuadro de Amortización en base al plan de cuotas niveladas")
         st.dataframe(df.reset_index(drop=True))
 
         # Excelファイルのダウンロードオプション
