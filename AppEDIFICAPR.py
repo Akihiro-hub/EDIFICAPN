@@ -1,10 +1,5 @@
 import streamlit as st
 
-import time
-def main():
-    while True:
-        time.sleep(360 * 360)  # Sleep for 6 hours 6時間ごとに起動
-
 import pandas as pd
 from io import BytesIO
 from openpyxl import Workbook
@@ -158,10 +153,13 @@ elif rubro == "Pronóstico de ventas":
         plt.tight_layout()
         st.pyplot(plt)
     
+        # 小数点以下を表示しない設定
+        pd.options.display.float_format = '{:.0f}'.format   
+        
         # 表の表示
         st.subheader("Datos de ventas realizadas y estimadas")
         st.write("Los datos de días de lluvia y otros indicadores no son exactamente del año pasado sino de los otros años de muestra.")
-        resultados = pd.concat([data, forecast_df])
+        resultados = pd.concat([data, forecast_df.round(0)])
         resultados.index = [f"Hace {12-i} meses ({meses[(mes_index-12+i)%12]})" for i in range(12)] + [meses[(mes_index+i)%12] for i in range(12, 24)]
         st.dataframe(resultados)
     
@@ -491,7 +489,7 @@ elif rubro == "Plan de emprendimiento":
     st.write("###### El plan de emprendimiento se puede elaborar, mediante los siguientes pasos (1) concretar las ideas del negocio,y (2) preparar el plan financiero al inicio del negocio.")  
     
     st.write("## :blue[Paso 1: Concretar las ideas sobre el negocio]") 
-    st.write("###### Este primer paso se puede desarrollar, mediante la llenada de las siguientes dos tablas. La primera tabla facilita concretar las ideas del negocio a montar. La segunda apoya que tenga las ideas sobre compras y ventas en cuanto al negocio.")  
+    st.write("Este primer paso se puede desarrollar, mediante la llenada de las siguientes dos tablas. La primera tabla facilita concretar las ideas del negocio a montar. La segunda apoya que tenga las ideas sobre compras y ventas en cuanto al negocio.")  
     edited_sheets = {}
 
     for sheet_name, df in sheets.items():
@@ -547,45 +545,73 @@ elif rubro == "Plan de emprendimiento":
 
     # 資金計画部分
     st.write("## :blue[Paso 2: Elaborar el plan financiero al inicio]") 
-    st.write("###### Como el segundo paso, el emprendedor deberá elaborar el plan financiero al inicio del negocio, retroalimentando el paso anterior. El plan deberá identidicar el capital a necesitar y cómo adquirirlo.") 
-    st.write("###### Con relación al capital de trabajo, será importante estimar el monto necesario para los primeros 3 meses de operación, considerando que las ventas podrán ser inestables al inicio del negocio.") 
-    
+    st.write("Como el segundo paso, el emprendedor deberá elaborar el plan financiero al inicio del negocio, retroalimentando el paso anterior. El plan deberá identidicar el capital a necesitar y cómo adquirirlo.") 
+    st.write("Con relación al capital de trabajo, será importante estimar el monto necesario para los primeros 3 meses de operación, considerando que las ventas podrán ser inestables al inicio del negocio.") 
+
     # 初期データ
     data1 = {
-        "Asuntos": ["2 microondas", "3 fogones", "2 estantes", "Remodelación de la tienda", "Otros"] + [""] * 5,
-        "Monto (Lps.)": [8000, 12000, 10000, 90000, 10000] + [0] * 5
+        "Asuntos": ["2 microondas", "3 fogones", "Remodelación de la tienda", "Otros"] + [""] * 1,
+        "Monto (Lps.)": [8000, 21000, 90000, 11000] + [0] * 1 
     }
 
     data2 = {
-        "Asuntos": ["Materias primas (harina de trigo, huevos, etc.)", "Agua y electricidad", "Otros"] + [""] * 7,
-        "Monto (Lps.)": [30000, 12000, 8000] + [0] * 7
+        "Asuntos": ["Materias primas (harina de trigo, huevos, etc.)", "Agua y electricidad", "Otros"] + [""] * 2,
+        "Monto (Lps.)": [30000, 12000, 8000] + [0] * 2
     }
 
     # データフレーム作成
     df1 = pd.DataFrame(data1)
     df2 = pd.DataFrame(data2)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        # Capital de inversión a necesitar
-        st.subheader("Tabla: Capital de inversión a necesitar")
-        # カラム幅と高さを調整
-        st.dataframe(df1, width=800, height=200)
+    # 編集用のインタラクティブなテーブルを作成する関数
+    def edit_table(df, column_name):
+        edited_data = []
+        for i, row in df.iterrows():
+            asunto = st.text_input(f"Asunto {i+1}", row['Asuntos'], key=f"asunto_{i}_{column_name}")
+            monto = st.number_input(f"Monto {i+1} (Lps.)", value=row['Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_{column_name}")
+            edited_data.append([asunto, monto])
+        return pd.DataFrame(edited_data, columns=['Asuntos', 'Monto (Lps.)'])
 
-        # 合計の計算と表示
-        total1 = total_inversion = df1["Monto (Lps.)"].sum()
-        st.write(f"**Total Capital de Inversión:** {total_inversion} Lps.")
+    # Capital de inversión a necesitar
+    st.subheader("Tabla: Capital de inversión a necesitar")
 
-    with col2:
-        # Capital de trabajo a necesitar para primeros 3 meses de la operación
-        st.subheader("Tabla: Capital de trabajo para primeros 3 meses")
-       
-        # カラム幅と高さを調整
-        st.dataframe(df2, width=800, height=200)
+    # 5列表示を作成
+    cols = st.columns(5)
 
-        # 合計行の計算と表示
-        total2 = total_trabajo = df2["Monto (Lps.)"].sum()
-        st.write(f"**Total Capital de Trabajo:** {total_trabajo} Lps.")
+    # 各列にAsuntoとMontoを順番に配置
+    for i in range(5):
+        with cols[i]:
+            if i < len(df1):
+                st.text_input(f"Asunto {i+1}", df1.at[i, 'Asuntos'], key=f"asunto_{i}_inversion")
+                st.number_input(f"Monto {i+1} (Lps.)", value=df1.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_inversion")
+
+    # 合計の計算と表示
+    editable_df1 = pd.DataFrame({
+        "Asuntos": [st.session_state[f"asunto_{i}_inversion"] for i in range(5)],
+        "Monto (Lps.)": [st.session_state[f"monto_{i}_inversion"] for i in range(5)]
+    })
+    total1 = editable_df1["Monto (Lps.)"].sum()
+    st.write(f"**Total Capital de Inversión:** {total1} Lps.")
+
+    # Capital de trabajo a necesitar para primeros 3 meses de la operación
+    st.subheader("Tabla: Capital de trabajo para primeros 3 meses")
+
+    # 5列表示を作成（2つ目のテーブル）
+    cols2 = st.columns(5)
+
+    for i in range(5):
+        with cols2[i]:
+            if i < len(df2):
+                st.text_input(f"Asunto {i+1}", df2.at[i, 'Asuntos'], key=f"asunto_{i}_trabajo")
+                st.number_input(f"Monto {i+1} (Lps.)", value=df2.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_trabajo")
+
+    # 合計の計算と表示
+    editable_df2 = pd.DataFrame({
+        "Asuntos": [st.session_state[f"asunto_{i}_trabajo"] for i in range(5)],
+        "Monto (Lps.)": [st.session_state[f"monto_{i}_trabajo"] for i in range(5)]
+    })
+    total2 = editable_df2["Monto (Lps.)"].sum()
+    st.write(f"**Total Capital de Trabajo:** {total2} Lps.")
 
     # Tabla 3: Fuentes del capital necesario
     st.subheader("Tabla: Fuentes del capital a necesitar")
@@ -609,17 +635,23 @@ elif rubro == "Plan de emprendimiento":
     elif total1 + total2 < total3:
         st.warning(f"¡Ojo! La financiación (fuentes del capital) excede el monto total necesario para montar el negocio. La cantidad necesaria debe ser {total1 + total2} Lps.")
 
-    # エクセル出力のための関数
-    def to_excel(df1, df2, a, b, c, d, e):
+    # エクセル出力のための関数（editable_df1 と editable_df2 を使用）
+    def to_excel(editable_df1, editable_df2, a, b, c, d, e):
         output = BytesIO()
         workbook = Workbook()
+        
+        # シート1: Editableなテーブル1
         worksheet1 = workbook.active
         worksheet1.title = "Tabla 1"
-        for r in dataframe_to_rows(df1, index=False, header=True):
+        for r in dataframe_to_rows(editable_df1, index=False, header=True):
             worksheet1.append(r)
+        
+        # シート2: Editableなテーブル2
         worksheet2 = workbook.create_sheet("Tabla 2")
-        for r in dataframe_to_rows(df2, index=False, header=True):
+        for r in dataframe_to_rows(editable_df2, index=False, header=True):
             worksheet2.append(r)
+        
+        # シート3: Capital sources table
         worksheet3 = workbook.create_sheet("Tabla 3")
         worksheet3.append(["Asuntos", "Monto (Lps.)"])
         worksheet3.append(["Mi propio dinero", a])
@@ -639,7 +671,6 @@ elif rubro == "Plan de emprendimiento":
         workbook.save(output)
         return output.getvalue()
 
-    # エクセル出力のためのボタン
-    excel_data = to_excel(df1, df2, a, b, c, d, e)
+    # エクセル出力のためのボタン (editable_df1 と editable_df2 を使用)
+    excel_data = to_excel(editable_df1, editable_df2, a, b, c, d, e)
     st.download_button(label="Descargar en Excel", data=excel_data, file_name="planificacion_de_capital.xlsx")
-
