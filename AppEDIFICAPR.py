@@ -583,9 +583,8 @@ elif rubro == "Plan de emprendimiento":
     for i in range(5):
         with cols[i]:
             if i < len(df1):
-                asunto = bleach.clean(st.text_input(f"Asunto {i+1}", df1.at[i, 'Asuntos'], key=f"asunto_{i}_inversion"))
-                monto = st.number_input(f"Monto {i+1} (Lps.)", value=df1.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_inversion")
-
+                st.text_input(f"Asunto {i+1}", df1.at[i, 'Asuntos'], key=f"asunto_{i}_inversion")
+                st.number_input(f"Monto {i+1} (Lps.)", value=df1.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_inversion")
 
     # 合計の計算と表示
     editable_df1 = pd.DataFrame({
@@ -600,11 +599,12 @@ elif rubro == "Plan de emprendimiento":
 
     # 5列表示を作成（2つ目のテーブル）
     cols2 = st.columns(5)
+
     for i in range(5):
         with cols2[i]:
             if i < len(df2):
-                asunto = bleach.clean(st.text_input(f"Asunto {i+1}", df2.at[i, 'Asuntos'], key=f"asunto_{i}_trabajo"))
-                monto = st.number_input(f"Monto {i+1} (Lps.)", value=df2.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_trabajo")
+                st.text_input(f"Asunto {i+1}", df2.at[i, 'Asuntos'], key=f"asunto_{i}_trabajo")
+                st.number_input(f"Monto {i+1} (Lps.)", value=df2.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_trabajo")
 
     # 合計の計算と表示
     editable_df2 = pd.DataFrame({
