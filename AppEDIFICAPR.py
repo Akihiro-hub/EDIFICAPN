@@ -12,6 +12,7 @@ from sklearn.metrics import mean_squared_error
 from openpyxl import load_workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Alignment, Border, Side  # 必要なモジュールをインポート
+import bleach  # bleachをインポート
 
 rubro = st.sidebar.selectbox("Herramientas de planificación a aplicar", ["Seleccione", "Plan de emprendimiento", "Plan de negocio en operación",  "Pronóstico de ventas", "Planificación de préstamos", "Plan de pagos de deuda e interés", "Plan del flujo de caja", "Plan de inversión", "Planificación de inventario",  "Análisis de punto de equilibrio", "Planificación de venta (Comedor)"])
 
@@ -562,12 +563,12 @@ elif rubro == "Plan de emprendimiento":
     # データフレーム作成
     df1 = pd.DataFrame(data1)
     df2 = pd.DataFrame(data2)
-
+    
     # 編集用のインタラクティブなテーブルを作成する関数
     def edit_table(df, column_name):
         edited_data = []
         for i, row in df.iterrows():
-            asunto = st.text_input(f"Asunto {i+1}", row['Asuntos'], key=f"asunto_{i}_{column_name}")
+            asunto = bleach.clean(st.text_input(f"Asunto {i+1}", row['Asuntos'], key=f"asunto_{i}_{column_name}"))
             monto = st.number_input(f"Monto {i+1} (Lps.)", value=row['Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_{column_name}")
             edited_data.append([asunto, monto])
         return pd.DataFrame(edited_data, columns=['Asuntos', 'Monto (Lps.)'])
@@ -582,8 +583,10 @@ elif rubro == "Plan de emprendimiento":
     for i in range(5):
         with cols[i]:
             if i < len(df1):
-                st.text_input(f"Asunto {i+1}", df1.at[i, 'Asuntos'], key=f"asunto_{i}_inversion")
-                st.number_input(f"Monto {i+1} (Lps.)", value=df1.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_inversion")
+                asunto = bleach.clean(st.text_input(f"Asunto {i+1}", df1.at[i, 'Asuntos'], key=f"asunto_{i}_inversion"))
+                monto = st.number_input(f"Monto {i+1} (Lps.)", value=df1.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_inversion")
+                st.session_state[f"asunto_{i}_inversion"] = asunto
+                st.session_state[f"monto_{i}_inversion"] = monto
 
     # 合計の計算と表示
     editable_df1 = pd.DataFrame({
@@ -598,12 +601,13 @@ elif rubro == "Plan de emprendimiento":
 
     # 5列表示を作成（2つ目のテーブル）
     cols2 = st.columns(5)
-
     for i in range(5):
         with cols2[i]:
             if i < len(df2):
-                st.text_input(f"Asunto {i+1}", df2.at[i, 'Asuntos'], key=f"asunto_{i}_trabajo")
-                st.number_input(f"Monto {i+1} (Lps.)", value=df2.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_trabajo")
+                asunto = bleach.clean(st.text_input(f"Asunto {i+1}", df2.at[i, 'Asuntos'], key=f"asunto_{i}_trabajo"))
+                monto = st.number_input(f"Monto {i+1} (Lps.)", value=df2.at[i, 'Monto (Lps.)'], min_value=0, step=100, key=f"monto_{i}_trabajo")
+                st.session_state[f"asunto_{i}_trabajo"] = asunto
+                st.session_state[f"monto_{i}_trabajo"] = monto
 
     # 合計の計算と表示
     editable_df2 = pd.DataFrame({
